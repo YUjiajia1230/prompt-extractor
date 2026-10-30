@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>提示词反提取 · Prompt Lens</title>
+<style>
+:root{--paper:#F6F3EC;--sheet:#FDFBF6;--ink:#1B1813;--ink2:#5C564A;--line:#DDD5C4;--accent:#B03A1E;--soft:#F3E3D8;--ok:#2E7D4F}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;-webkit-font-smoothing:antialiased;padding:34px 16px 70px;line-height:1.75;font-size:15px}
+.wrap{max-width:920px;margin:0 auto}
+header{border-bottom:2.5px solid var(--ink);padding-bottom:16px;margin-bottom:8px}
+.kicker{font-size:11px;letter-spacing:.34em;color:var(--accent);font-weight:700}
+h1{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:36px;font-weight:900;letter-spacing:.03em;margin-top:4px}
+.sub{color:var(--ink2);font-size:13.5px;margin-top:4px}
+section{background:var(--sheet);border:1px solid var(--line);padding:22px 24px;margin-top:18px}
+h2{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:19px;font-weight:900;letter-spacing:.06em;margin-bottom:10px}
+h2::before{content:"";display:inline-block;width:8px;height:8px;background:var(--accent);margin-right:10px;vertical-align:2px}
+label{display:block;font-size:12.5px;letter-spacing:.08em;color:var(--ink2);margin:12px 0 5px;font-weight:700}
+input[type=text],input[type=password],input[type=url],select,textarea{width:100%;border:1px solid var(--line);background:#fff;padding:9px 11px;font-size:14px;color:var(--ink);border-radius:2px;font-family:inherit}
+textarea{min-height:74px;resize:vertical}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>div{flex:1;min-width:200px}
+button{background:var(--ink);color:#fff;border:none;padding:10px 20px;font-size:14px;letter-spacing:.12em;cursor:pointer;border-radius:2px;font-family:inherit}
+button:hover{background:var(--accent)}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+button.ghost:hover{color:var(--accent);border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.drop{border:1.5px dashed var(--line);padding:26px;text-align:center;color:var(--ink2);cursor:pointer;background:#fff}
+.drop:hover{border-color:var(--accent);color:var(--accent)}
+.drop input{display:none}
+.tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:6px 16px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:13.5px;letter-spacing:.06em}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.frames{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.frame{position:relative;width:128px}
+.frame img{width:128px;height:96px;object-fit:cover;display:block;border:1px solid var(--line)}
+.frame.t{position:absolute;left:0;bottom:0;background:rgba(27,24,19,.78);color:#fff;font-size:11px;padding:1px 6px}
+.frame.x{position:absolute;top:2px;right:2px;width:20px;height:20px;padding:0;font-size:12px;line-height:1;background:rgba(27,24,19,.78)}
+video{width:100%;max-height:340px;background:#000;margin-top:10px}
+.note{font-size:12.5px;color:var(--ink2);margin-top:8px}
+.warn{background:var(--soft);border-left:3px solid var(--accent);padding:10px 14px;font-size:13px;margin-top:10px}
+.out{white-space:pre-wrap;background:#fff;border:1px solid var(--line);padding:16px 18px;font-size:14px;line-height:1.85;margin-top:10px;min-height:60px}
+.out:empty{display:none}
+.status{font-size:13px;color:var(--ink2);margin-top:10px}
+.status.err{color:var(--accent)}
+.status.ok{color:var(--ok)}
+.acts{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+footer{margin-top:26px;text-align:center;color:var(--ink2);font-size:12px;letter-spacing:.2em}
+@media(max-width:640px){h1{font-size:28px}section{padding:18px 14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="kicker">AI 提示词反提取</div>
+<h1>Prompt Lens</h1>
+<div class="sub">给它一张照片、一段视频，或一条视频链接，它把画面反推成可以直接拿去生成的提示词——主体、服装配饰、场景、光线、运镜逐项拆清，看不清的地方标“推测”，不编。</div>
+</header>
+
+<section>
+<h2>第一步 · 给内容</h2>
+<div class="tabs">
+<div class="tab on" data-mode="image">照片</div>
+<div class="tab" data-mode="video">视频文件</div>
+<div class="tab" data-mode="link">视频链接</div>
+</div>
+
+<div id="pane-image">
+<div class="drop" id="dropImg">点击选择照片（JPG / PNG / WEBP）<input type="file" id="fileImg" accept="image/*"></div>
+</div>
+
+<div id="pane-video" style="display:none">
+<div class="drop" id="dropVid">点击选择视频（MP4 / MOV），选好后自动抽帧<input type="file" id="fileVid" accept="video/*"></div>
+<video id="vid" controls playsinline style="display:none"></video>
+<div class="acts" id="vidActs" style="display:none">
+<button class="ghost" id="btnGrab">把当前画面补抓一帧</button>
+<button class="ghost" id="btnReExtract">重新均匀抽帧</button>
+</div>
+</div>
+
+<div id="pane-link" style="display:none">
+<label>抖音 / 小红书 / 其他平台的视频或图文链接</label>
+<input type="url" id="linkUrl" placeholder="把链接粘贴到这里">
+<div class="acts"><button id="btnLink">读取链接</button></div>
+<div class="note" id="linkStatus"></div>
+<div class="warn">实话说明：网页受浏览器跨域限制，链接不一定能直接读到画面。读取失败时最稳的办法是把视频先保存到手机/电脑，再用上面的“视频文件”上传——效果完全一样。</div>
+</div>
+
+<div class="frames" id="frames"></div>
+<div class="note" id="frameNote"></div>
+</section>
+
+<section>
+<h2>第二步 · 接口设置</h2>
+<div class="row">
+<div><label>接口地址（OpenAI 兼容，以 /v1 结尾）</label><input type="text" id="apiBase" placeholder="例如 https://api.openai.com/v1 或你的中转站地址"></div>
+<div><label>模型（要带视觉能力）</label><input type="text" id="apiModel" placeholder="例如 gpt-4o / gemini-2.5-pro / qwen-vl-max"></div>
+</div>
+<label>API 密钥</label>
+<input type="password" id="apiKey" placeholder="只保存在你这台设备的浏览器里，不会上传到任何别的地方">
+<div class="note">设置只存在本机浏览器（localStorage），这个页面本身不收集、不转发你的密钥。</div>
+</section>
+
+<section>
+<h2>第三步 · 反提取</h2>
+<label>补充要求（可空）</label>
+<textarea id="extra" placeholder="例如：重点拆运镜；我要用在即梦里；人物是重点，配饰逐项列全……"></textarea>
+<div class="acts">
+<button id="btnRun">开始反提取</button>
+<button class="ghost" id="btnCopyZh" disabled>复制中文提示词</button>
+<button class="ghost" id="btnSave" disabled>下载完整结果 (.md)</button>
+</div>
+<div class="status" id="status"></div>
+<div class="out" id="output"></div>
+</section>
+
+<footer>PROMPT LENS · 反提取结果请自行核对“不确定项”再使用</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const framesEl = $('#frames'), statusEl = $('#status'), outputEl = $('#output');
+let frames = []; // {dataUrl, label}
+let mode = 'image';
+
+// ---------- 设置持久化 ----------
+const cfgIds = ['apiBase','apiModel','apiKey'];
+cfgIds.forEach(id => {
+const el = document.getElementById(id);
+el.value = localStorage.getItem('pl_' + id) || '';
+el.addEventListener('change', () => localStorage.setItem('pl_' + id, el.value.trim()));
+});
+
+// ---------- 页签 ----------
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+t.classList.add('on'); mode = t.dataset.mode;
+['image','video','link'].forEach(m => $('#pane-' + m).style.display = m === mode? '': 'none');
+}));
+
+// ---------- 帧管理 ----------
+function renderFrames() {
+framesEl.innerHTML = '';
+frames.forEach((f, i) => {
+const d = document.createElement('div'); d.className = 'frame';
+d.innerHTML = '<img src="' + f.dataUrl + '"><span class="t">' + f.label + '</span>';
+const x = document.createElement('button'); x.className = 'x'; x.textContent = '×';
+x.onclick = () => { frames.splice(i, 1); renderFrames();};
+d.appendChild(x); framesEl.appendChild(d);
+});
+$('#frameNote').textContent = frames.length? ('已备好 ' + frames.length + ' 帧，点 × 可去掉不要的。帧越多、覆盖视频全程，反推越准。'): '';
+}
+function downscale(imgOrCanvas, srcW, srcH) {
+const max = 1024, r = Math.min(1, max / Math.max(srcW, srcH));
+const c = document.createElement('canvas');
+c.width = Math.round(srcW * r); c.height = Math.round(srcH * r);
+c.getContext('2d').drawImage(imgOrCanvas, 0, 0, c.width, c.height);
+return c.toDataURL('image/jpeg', 0.82);
+}
+function addImageFile(file) {
+const img = new Image();
+img.onload = () => { frames.push({ dataUrl: downscale(img, img.naturalWidth, img.naturalHeight), label: '照片'}); renderFrames(); URL.revokeObjectURL(img.src);};
+img.src = URL.createObjectURL(file);
+}
+$('#dropImg').onclick = () => $('#fileImg').click();
+$('#fileImg').onchange = e => { if (e.target.files[0]) addImageFile(e.target.files[0]);};
+
+// ---------- 视频抽帧 ----------
+const vid = $('#vid');
+let vidURL = null;
+$('#dropVid').onclick = () => $('#fileVid').click();
+$('#fileVid').onchange = e => {
+const f = e.target.files[0]; if (!f) return;
+if (vidURL) URL.revokeObjectURL(vidURL);
+vidURL = URL.createObjectURL(f); vid.src = vidURL; vid.style.display = '';
+$('#vidActs').style.display = '';
+vid.onloadedmetadata = () => extractFrames();
+};
+function grabAt(t) {
+return new Promise(res => {
+const onSeek = () => {
+vid.removeEventListener('seeked', onSeek);
+frames.push({ dataUrl: downscale(vid, vid.videoWidth, vid.videoHeight), label: t.toFixed(1) + 's'});
+renderFrames(); res();
+};
+vid.addEventListener('seeked', onSeek);
+vid.currentTime = Math.min(t, Math.max(0, vid.duration - 0.05));
+});
+}
+async function extractFrames() {
+frames = []; renderFrames();
+const d = vid.duration || 0; if (!d) return;
+const n = 6, times = [];
+for (let i = 0; i < n; i++) times.push(d * (i + 0.5) / n);
+for (const t of times) await grabAt(t);
+vid.currentTime = 0;
+}
+$('#btnReExtract').onclick = () => extractFrames();
+$('#btnGrab').onclick = async () => {
+frames.push({ dataUrl: downscale(vid, vid.videoWidth, vid.videoHeight), label: vid.currentTime.toFixed(1) + 's'});
+renderFrames();
+};
+
+// ---------- 链接读取（实验性：经公共代理取页面 og 信息） ----------
+$('#btnLink').onclick = async () => {
+const url = $('#linkUrl').value.trim();
+const st = $('#linkStatus');
+if (!url) { st.textContent = '先把链接粘进来。'; return;}
+st.textContent = '正在尝试读取链接……';
+try {
+const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+const html = await r.text();
+const doc = new DOMParser().parseFromString(html, 'text/html');
+const ogImg = doc.querySelector('meta[property="og:image"]')?.content;
+const ogTitle = doc.querySelector('meta[property="og:title"]')?.content || '';
+if (ogImg) {
+const img = new Image(); img.crossOrigin = 'anonymous';
+img.onload = () => { frames.push({ dataUrl: downscale(img, img.naturalWidth, img.naturalHeight), label: '链接封面'}); renderFrames(); st.textContent = '读到了封面图：' + ogTitle + '。注意这只是封面，视频全程的内容读不到；要反推整条视频，还是下载后上传视频文件最准。';};
+img.onerror = () => { st.textContent = '链接页面读到了，但封面图被对方防盗链拦住。建议下载视频后用“视频文件”上传。';};
+img.src = ogImg;
+} else {
+st.textContent = '这个链接没读到画面（对方平台拦截或需要登录）。建议下载视频后用“视频文件”上传。';
+}
+} catch (e) {
+st.textContent = '读取失败（网络或跨域限制）。建议下载视频后用“视频文件”上传。';
+}
+};
+
+// ---------- 反提取 ----------
+const SYSTEM = `你是一名顶级的 AI 视频/图片提示词反向工程师。用户会给你同一条作品的一张或多张画面帧（视频会给覆盖全程的多帧）。你的任务：反推出能最大程度复刻这条作品的生成提示词，并做结构化拆解。
+
+铁律：
+1. 只写画面里真实可见的东西。看不清、无法确认的，写进并标“推测”，不许编造。
+2. 人物的服装、配饰、道具必须逐项列全（这是复刻一致性的关键）：上衣、下装、鞋、发型、妆容、首饰、包、帽子等，一项不漏。
+3. 视频要按时间顺序描述动作与运镜变化：景别、机位、运镜方式（推/拉/摇/移/跟/环绕/固定）、每个镜头的时长感。
+4. 提示词要写成生成工具能直接用的成品句，不要写成赏析文章。
+
+输出格式（严格按这个顺序，用中文）：
+一句话说清这条作品是什么。
+一段可直接粘贴到即梦/可灵/海螺等工具的完整提示词，包含主体、动作、场景、光线、镜头、画风与质感。
+同一内容的英文版一段。
+
+- 主体：
+- 外貌与妆造：
+- 服装配饰（逐项）：
+- 场景环境：
+- 光线：
+- 镜头与运镜：
+- 画风与质感：
+- 时长与节奏：
+复刻时最容易跑偏的 2-4 点，逐条写。
+没有就写“无”。`;
+
+let lastText = '';
+$('#btnRun').onclick = async () => {
+const base = $('#apiBase').value.trim().replace(/\/$/, '');
+const model = $('#apiModel').value.trim();
+const key = $('#apiKey').value.trim();
+cfgIds.forEach(id => localStorage.setItem('pl_' + id, document.getElementById(id).value.trim()));
+if (!frames.length) { setStatus('先给一张照片、一段视频或一个链接，把画面备好。', 'err'); return;}
+if (!base ||!model ||!key) { setStatus('接口地址、模型、密钥三样都要填（在第二步）。', 'err'); return;}
+setStatus('正在反提取，帧数 ' + frames.length + '，请稍等……');
+outputEl.textContent = ''; lastText = '';
+$('#btnCopyZh').disabled = true; $('#btnSave').disabled = true;
+const content = [{ type: 'text', text: '请反推这些画面的生成提示词。' + ($('#extra').value.trim()? '补充要求：' + $('#extra').value.trim(): '')}];
+frames.forEach(f => content.push({ type: 'image_url', image_url: { url: f.dataUrl}}));
+try {
+const r = await fetch(base + '/chat/completions', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key},
+body: JSON.stringify({ model, messages: [{ role: 'system', content: SYSTEM}, { role: 'user', content}], temperature: 0.3})
+});
+if (!r.ok) throw new Error('接口返回 ' + r.status + '：' + (await r.text()).slice(0, 300));
+const j = await r.json();
+lastText = j.choices?.[0]?.message?.content || '(接口没有返回内容)';
+outputEl.textContent = lastText;
+setStatus('完成。先看一眼再拿去生成，心里更有数。', 'ok');
+$('#btnCopyZh').disabled = false; $('#btnSave').disabled = false;
+} catch (e) {
+setStatus('出错了：' + e.message + '。常见原因：接口地址不对、密钥无效、模型不带视觉、或中转站不支持图片输入。', 'err');
+}
+};
+function setStatus(t, cls) { statusEl.textContent = t; statusEl.className = 'status' + (cls? ' ' + cls: '');}
+$('#btnCopyZh').onclick = () => {
+const m = lastText.match(/([\s\S]*?)(?=)/);
+navigator.clipboard.writeText(m? m[1].trim(): lastText);
+setStatus('中文提示词已复制。', 'ok');
+};
+$('#btnSave').onclick = () => {
+const a = document.createElement('a');
+a.href = URL.createObjectURL(new Blob([lastText], { type: 'text/markdown'}));
+a.download = 'prompt-reverse-result.md'; a.click();
+};
+</script>
+</body>
+</html>
