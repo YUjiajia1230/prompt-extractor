@@ -79,7 +79,7 @@ footer{margin-top:56px;border-top:1px solid var(--edge);padding-top:16px;display
 <body>
 <div class="wrap">
 <header>
-<div class="brandrow"><div class="brand">暗 房 · 反 提 取</div><div class="ver mono">PROMPT LENS — V2</div></div>
+<div class="brandrow"><div class="brand">暗 房 · 反 提 取</div><div class="ver mono">PROMPT LENS — V3</div></div>
 <h1>把画面<span class="lens">显影</span>成提示词</h1>
 <p class="lede">给它一张照片、一段视频，或一条视频链接。它逐帧看完，<b>反推出能直接拿去生成的提示词</b>——主体、服装配饰、场景、光线、运镜逐项拆清；看不清的地方标“推测”，不编。</p>
 </header>
@@ -121,7 +121,14 @@ footer{margin-top:56px;border-top:1px solid var(--edge);padding-top:16px;display
 <div class="station-head"><span class="station-no">No.2</span><h2>配液</h2><span class="station-note">接口三样，缺一不可</span></div>
 <div class="row">
 <div><label>接口地址（OpenAI 兼容，以 /v1 结尾）</label><input type="text" id="apiBase" placeholder="例如 https://api.openai.com/v1 或你的中转站地址"></div>
-<div><label>模型（要带视觉能力）</label><input type="text" id="apiModel" placeholder="例如 gpt-4o / gemini-2.5-pro / qwen-vl-max"></div>
+<div><label>模型（要带视觉能力，先填地址和密钥，再拉取列表来选）</label>
+      <div style="display:flex;gap:8px">
+        <select id="apiModelSelect" style="flex:1;border:1px solid var(--edge);background:var(--room2);padding:10px 12px;font-size:14px;color:var(--bone);border-radius:2px;font-family:inherit"><option value="">（点右侧按钮拉取，或在下方手动输入）</option></select>
+        <button class="ghost" id="btnModels" type="button">拉取模型列表</button>
+      </div>
+      <input type="text" id="apiModel" placeholder="或手动输入模型名，例如 gpt-4o / gemini-2.5-pro（填了它就优先用它）" style="margin-top:8px">
+      <div class="note" id="modelStatus"></div>
+    </div>
 </div>
 <label>API 密钥</label>
 <input type="password" id="apiKey" placeholder="只保存在你这台设备的浏览器里，不会上传到任何别的地方">
@@ -150,12 +157,43 @@ const framesEl = $('#frames'), statusEl = $('#status'), outputEl = $('#output'),
 let frames = [];
 let mode = 'image';
 
-const cfgIds = ['apiBase','apiModel','apiKey'];
+const cfgIds = ['apiBase','apiModel','apiKey','apiModelSelect'];
 cfgIds.forEach(id => {
 const el = document.getElementById(id);
-el.value = localStorage.getItem('pl_' + id) || '';
+const saved = localStorage.getItem('pl_' + id) || '';
+if (id === 'apiModelSelect' && saved) {
+const o = document.createElement('option'); o.value = saved; o.textContent = saved + '（上次用的）';
+el.appendChild(o);
+}
+el.value = saved;
 el.addEventListener('change', () => localStorage.setItem('pl_' + id, el.value.trim()));
 });
+
+// ---------- 拉取模型列表 ----------
+$('#btnModels').onclick = async () => {
+const base = $('#apiBase').value.trim().replace(/\/$/, '');
+const key = $('#apiKey').value.trim();
+const st = $('#modelStatus');
+if (!base || !key) { st.textContent = '先把接口地址和 API 密钥填好，再拉取。'; return; }
+st.textContent = '正在向接口拉取模型列表……';
+try {
+const r = await fetch(base + '/models', { headers: { 'Authorization': 'Bearer ' + key } });
+if (!r.ok) throw new Error('接口返回 ' + r.status);
+const j = await r.json();
+const ids = (j.data || []).map(m => m.id).filter(Boolean);
+if (!ids.length) throw new Error('接口没返回模型列表');
+const visionHint = /gpt-4|gpt-5|gemini|claude|qwen.*vl|vl|vision|4o/i;
+ids.sort((a, b) => ((visionHint.test(b) ? 1 : 0) - (visionHint.test(a) ? 1 : 0)) || a.localeCompare(b));
+const sel = $('#apiModelSelect');
+sel.innerHTML = '';
+ids.forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = id; sel.appendChild(o); });
+sel.value = ids[0];
+localStorage.setItem('pl_apiModelSelect', sel.value);
+st.textContent = '拉到 ' + ids.length + ' 个模型，能看图的排在前面了。选 GPT-4o / Gemini / Qwen-VL 这类就行。';
+} catch (e) {
+st.textContent = '拉取失败：' + e.message + '。地址或密钥不对时拉不到；也可以在下方手动输入模型名。';
+}
+};
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
 document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
@@ -276,7 +314,7 @@ const SYSTEM = `你是一名顶级的 AI 视频/图片提示词反向工程师�
 let lastText = '';
 $('#btnRun').onclick = async () => {
 const base = $('#apiBase').value.trim().replace(/\/$/, '');
-const model = $('#apiModel').value.trim();
+const model = $('#apiModel').value.trim() || $('#apiModelSelect').value.trim();
 const key = $('#apiKey').value.trim();
 cfgIds.forEach(id => localStorage.setItem('pl_' + id, document.getElementById(id).value.trim()));
 if (!frames.length) { setStatus('先给一张照片、一段视频或一个链接，把画面备好。', 'err'); return;}
