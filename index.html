@@ -79,7 +79,7 @@ footer{margin-top:56px;border-top:1px solid var(--edge);padding-top:16px;display
 <body>
 <div class="wrap">
 <header>
-<div class="brandrow"><div class="brand">暗 房 · 反 提 取</div><div class="ver mono">PROMPT LENS — V3</div></div>
+<div class="brandrow"><div class="brand">暗 房 · 反 提 取</div><div class="ver mono">PROMPT LENS — V4</div></div>
 <h1>把画面<span class="lens">显影</span>成提示词</h1>
 <p class="lede">给它一张照片、一段视频，或一条视频链接。它逐帧看完，<b>反推出能直接拿去生成的提示词</b>——主体、服装配饰、场景、光线、运镜逐项拆清；看不清的地方标“推测”，不编。</p>
 </header>
@@ -123,7 +123,7 @@ footer{margin-top:56px;border-top:1px solid var(--edge);padding-top:16px;display
 <div><label>接口地址（OpenAI 兼容，以 /v1 结尾）</label><input type="text" id="apiBase" placeholder="例如 https://api.openai.com/v1 或你的中转站地址"></div>
 <div><label>模型（要带视觉能力，先填地址和密钥，再拉取列表来选）</label>
       <div style="display:flex;gap:8px">
-        <select id="apiModelSelect" style="flex:1;border:1px solid var(--edge);background:var(--room2);padding:10px 12px;font-size:14px;color:var(--bone);border-radius:2px;font-family:inherit"><option value="">（点右侧按钮拉取，或在下方手动输入）</option></select>
+        <select id="apiModelSelect" style="flex:1;border:1px solid var(--edge);background:var(--room2);padding:10px 12px;font-size:14px;color:var(--bone);border-radius:2px;font-family:inherit"><option value="">（从下面直接选常用模型，或点右侧拉取接口的全部模型）</option></select>
         <button class="ghost" id="btnModels" type="button">拉取模型列表</button>
       </div>
       <input type="text" id="apiModel" placeholder="或手动输入模型名，例如 gpt-4o / gemini-2.5-pro（填了它就优先用它）" style="margin-top:8px">
@@ -169,30 +169,48 @@ el.value = saved;
 el.addEventListener('change', () => localStorage.setItem('pl_' + id, el.value.trim()));
 });
 
-// ---------- 拉取模型列表 ----------
+// ---------- 常用模型（内置，不用拉取也能直接选） ----------
+const BUILTIN_MODELS = ['gpt-4o','gpt-4o-mini','gpt-5','gpt-5-mini','gemini-2.5-pro','gemini-2.5-flash','claude-sonnet-4-5','claude-opus-4-1','qwen-vl-max','qwen2.5-vl-72b-instruct'];
+(function () {
+const sel = $('#apiModelSelect');
+const g = document.createElement('optgroup'); g.label = '常用模型（直接选，不用拉取）';
+BUILTIN_MODELS.forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = id; g.appendChild(o); });
+sel.appendChild(g);
+const saved = localStorage.getItem('pl_apiModelSelect') || '';
+if (saved) sel.value = saved;
+})();
+
+// ---------- 拉取模型列表（OpenAI 兼容 GET /models，多路径轮试） ----------
 $('#btnModels').onclick = async () => {
 const base = $('#apiBase').value.trim().replace(/\/$/, '');
 const key = $('#apiKey').value.trim();
 const st = $('#modelStatus');
-if (!base || !key) { st.textContent = '先把接口地址和 API 密钥填好，再拉取。'; return; }
+if (!base || !key) { st.textContent = '先把接口地址和 API 密钥填好，再拉取。拉不到也没关系，左边下拉里有常用模型可以直接选。'; return; }
+const candidates = [base + '/models'];
+if (!/\/v1$/.test(base)) candidates.push(base + '/v1/models');
 st.textContent = '正在向接口拉取模型列表……';
+let lastErr = '';
+for (const url of candidates) {
 try {
-const r = await fetch(base + '/models', { headers: { 'Authorization': 'Bearer ' + key } });
-if (!r.ok) throw new Error('接口返回 ' + r.status);
+const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + key } });
+if (!r.ok) { lastErr = url + ' → ' + r.status; continue; }
 const j = await r.json();
 const ids = (j.data || []).map(m => m.id).filter(Boolean);
-if (!ids.length) throw new Error('接口没返回模型列表');
+if (!ids.length) { lastErr = url + ' → 没返回模型'; continue; }
 const visionHint = /gpt-4|gpt-5|gemini|claude|qwen.*vl|vl|vision|4o/i;
 ids.sort((a, b) => ((visionHint.test(b) ? 1 : 0) - (visionHint.test(a) ? 1 : 0)) || a.localeCompare(b));
 const sel = $('#apiModelSelect');
-sel.innerHTML = '';
-ids.forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = id; sel.appendChild(o); });
+const old = document.getElementById('pulledGroup'); if (old) old.remove();
+const g = document.createElement('optgroup'); g.label = '接口返回的模型'; g.id = 'pulledGroup';
+ids.forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = id; g.appendChild(o); });
+sel.appendChild(g);
 sel.value = ids[0];
 localStorage.setItem('pl_apiModelSelect', sel.value);
-st.textContent = '拉到 ' + ids.length + ' 个模型，能看图的排在前面了。选 GPT-4o / Gemini / Qwen-VL 这类就行。';
-} catch (e) {
-st.textContent = '拉取失败：' + e.message + '。地址或密钥不对时拉不到；也可以在下方手动输入模型名。';
+st.textContent = '拉到 ' + ids.length + ' 个模型（走的是 ' + url + '），能看图的排在前面。';
+return;
+} catch (e) { lastErr = url + ' → ' + e.message; }
 }
+st.textContent = '拉取失败：' + lastErr + '。有些中转站不开放模型列表接口，不影响使用——左边下拉里选一个常用模型（比如 gpt-4o）就行，前提是你的中转站支持它。';
 };
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
