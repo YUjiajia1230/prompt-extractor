@@ -1,5 +1,7 @@
 # Prompt Lens · AI 提示词反提取
 
+在线使用（GitHub Pages）：https://yujiajia1230.github.io/prompt-extractor/
+
 给它一张照片、一段视频，或一条视频链接，它把画面反推成可以直接拿去生成的提示词。
 
 ## 它能做什么

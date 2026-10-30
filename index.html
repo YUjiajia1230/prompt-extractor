@@ -3,63 +3,89 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>提示词反提取 · Prompt Lens</title>
+<title>Prompt Lens · 提示词反提取</title>
 <style>
-:root{--paper:#F6F3EC;--sheet:#FDFBF6;--ink:#1B1813;--ink2:#5C564A;--line:#DDD5C4;--accent:#B03A1E;--soft:#F3E3D8;--ok:#2E7D4F}
+:root{
+--room:#14110E; --room2:#1D1915; --panel:#211C17; --edge:#3B342A;
+--bone:#EDE5D5; --bone2:#A99E8A; --safe:#E0492B; --amber:#E8A33D;
+--paper:#F4EDDE; --ink:#1B1712;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;-webkit-font-smoothing:antialiased;padding:34px 16px 70px;line-height:1.75;font-size:15px}
-.wrap{max-width:920px;margin:0 auto}
-header{border-bottom:2.5px solid var(--ink);padding-bottom:16px;margin-bottom:8px}
-.kicker{font-size:11px;letter-spacing:.34em;color:var(--accent);font-weight:700}
-h1{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:36px;font-weight:900;letter-spacing:.03em;margin-top:4px}
-.sub{color:var(--ink2);font-size:13.5px;margin-top:4px}
-section{background:var(--sheet);border:1px solid var(--line);padding:22px 24px;margin-top:18px}
-h2{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:19px;font-weight:900;letter-spacing:.06em;margin-bottom:10px}
-h2::before{content:"";display:inline-block;width:8px;height:8px;background:var(--accent);margin-right:10px;vertical-align:2px}
-label{display:block;font-size:12.5px;letter-spacing:.08em;color:var(--ink2);margin:12px 0 5px;font-weight:700}
-input[type=text],input[type=password],input[type=url],select,textarea{width:100%;border:1px solid var(--line);background:#fff;padding:9px 11px;font-size:14px;color:var(--ink);border-radius:2px;font-family:inherit}
-textarea{min-height:74px;resize:vertical}
-.row{display:flex;gap:12px;flex-wrap:wrap}
-.row>div{flex:1;min-width:200px}
-button{background:var(--ink);color:#fff;border:none;padding:10px 20px;font-size:14px;letter-spacing:.12em;cursor:pointer;border-radius:2px;font-family:inherit}
-button:hover{background:var(--accent)}
-button.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
-button.ghost:hover{color:var(--accent);border-color:var(--accent)}
-button:disabled{opacity:.45;cursor:not-allowed}
-.drop{border:1.5px dashed var(--line);padding:26px;text-align:center;color:var(--ink2);cursor:pointer;background:#fff}
-.drop:hover{border-color:var(--accent);color:var(--accent)}
+html{scroll-behavior:smooth}
+body{background:var(--room);color:var(--bone);font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;-webkit-font-smoothing:antialiased;line-height:1.75;font-size:15px;
+background-image:radial-gradient(1200px 500px at 85% -5%,rgba(224,73,43,.14),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(232,163,61,.07),transparent 55%)}
+.wrap{max-width:960px;margin:0 auto;padding:44px 18px 64px}
+.mono{font-family:"SF Mono",Menlo,Consolas,monospace}
+/* ---------- 报头：暗房铭牌 ---------- */
+header{border-bottom:1px solid var(--edge);padding-bottom:26px}
+.brandrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand{font-size:12px;letter-spacing:.42em;color:var(--amber)}
+.ver{font-size:11px;color:var(--bone2);letter-spacing:.18em}
+h1{font-family:"Songti SC","Noto Serif CJK SC",serif;font-weight:900;font-size:clamp(40px,8vw,68px);line-height:1.12;letter-spacing:.01em;margin-top:14px}
+h1.lens{color:var(--safe)}
+.lede{max-width:56ch;color:var(--bone2);font-size:14.5px;margin-top:12px}
+.lede b{color:var(--bone);font-weight:600}
+/* ---------- 工位 ---------- */
+section{margin-top:40px}
+.station-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--edge);padding-bottom:8px;margin-bottom:18px}
+.station-no{font-family:"SF Mono",Menlo,monospace;color:var(--safe);font-size:13px;letter-spacing:.2em}
+h2{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:22px;font-weight:900;letter-spacing:.05em}
+.station-note{margin-left:auto;color:var(--bone2);font-size:12px;letter-spacing:.08em}
+label{display:block;font-size:12px;letter-spacing:.14em;color:var(--bone2);margin:14px 0 6px}
+input[type=text],input[type=password],input[type=url],textarea{width:100%;border:1px solid var(--edge);background:var(--room2);padding:10px 12px;font-size:14px;color:var(--bone);border-radius:2px;font-family:inherit}
+input:focus,textarea:focus{outline:1px solid var(--safe);outline-offset:0;border-color:var(--safe)}
+textarea{min-height:72px;resize:vertical}
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.row>div{flex:1;min-width:210px}
+button{background:var(--safe);color:#FFF6EA;border:none;padding:11px 22px;font-size:14px;letter-spacing:.14em;cursor:pointer;border-radius:2px;font-family:inherit;font-weight:600}
+button:hover{background:#C93A20}
+button.ghost{background:transparent;color:var(--bone);border:1px solid var(--edge)}
+button.ghost:hover{border-color:var(--safe);color:var(--safe);background:transparent}
+button:disabled{opacity:.4;cursor:not-allowed}
+.tabs{display:flex;gap:0;border:1px solid var(--edge);width:max-content;max-width:100%;flex-wrap:wrap}
+.tab{padding:8px 20px;cursor:pointer;font-size:13.5px;letter-spacing:.1em;color:var(--bone2);border-right:1px solid var(--edge)}
+.tab:last-child{border-right:none}
+.tab.on{background:var(--bone);color:var(--ink);font-weight:700}
+.drop{margin-top:16px;border:1px dashed #57503F;padding:30px 20px;text-align:center;color:var(--bone2);cursor:pointer;background:var(--room2);letter-spacing:.06em}
+.drop:hover{border-color:var(--safe);color:var(--bone)}
 .drop input{display:none}
-.tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-.tab{padding:6px 16px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:13.5px;letter-spacing:.06em}
-.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.frames{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.frame{position:relative;width:128px}
-.frame img{width:128px;height:96px;object-fit:cover;display:block;border:1px solid var(--line)}
-.frame.t{position:absolute;left:0;bottom:0;background:rgba(27,24,19,.78);color:#fff;font-size:11px;padding:1px 6px}
-.frame.x{position:absolute;top:2px;right:2px;width:20px;height:20px;padding:0;font-size:12px;line-height:1;background:rgba(27,24,19,.78)}
-video{width:100%;max-height:340px;background:#000;margin-top:10px}
-.note{font-size:12.5px;color:var(--ink2);margin-top:8px}
-.warn{background:var(--soft);border-left:3px solid var(--accent);padding:10px 14px;font-size:13px;margin-top:10px}
-.out{white-space:pre-wrap;background:#fff;border:1px solid var(--line);padding:16px 18px;font-size:14px;line-height:1.85;margin-top:10px;min-height:60px}
-.out:empty{display:none}
-.status{font-size:13px;color:var(--ink2);margin-top:10px}
-.status.err{color:var(--accent)}
-.status.ok{color:var(--ok)}
-.acts{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
-footer{margin-top:26px;text-align:center;color:var(--ink2);font-size:12px;letter-spacing:.2em}
-@media(max-width:640px){h1{font-size:28px}section{padding:18px 14px}}
+video{width:100%;max-height:360px;background:#000;margin-top:14px;border:1px solid var(--edge)}
+.note{font-size:12.5px;color:var(--bone2);margin-top:9px}
+.warn{border-left:3px solid var(--amber);background:rgba(232,163,61,.08);padding:10px 14px;font-size:13px;margin-top:12px;color:var(--bone)}
+.acts{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+/* ---------- 胶片条：帧陈列 ---------- */
+.strip{display:none;margin-top:20px;background:#0B0A08;border:1px solid var(--edge);padding:14px 10px 10px;position:relative}
+.strip.show{display:block}
+.strip::before,.strip::after{content:"";position:absolute;left:0;right:0;height:8px;
+background-image:radial-gradient(circle 3px at 10px 4px,#2E2825 3px,transparent 3.5px);background-size:26px 8px;background-repeat:repeat-x}
+.strip::before{top:3px}.strip::after{bottom:3px}
+.frames{display:flex;gap:10px;flex-wrap:wrap;padding:6px 2px}
+.frame{position:relative;width:132px;background:#000}
+.frame img{width:132px;height:98px;object-fit:cover;display:block;opacity:.96}
+.frame.t{position:absolute;left:0;bottom:0;background:rgba(11,10,8,.85);color:var(--amber);font-family:"SF Mono",Menlo,monospace;font-size:10.5px;padding:1px 6px;letter-spacing:.08em}
+.frame.x{position:absolute;top:2px;right:2px;width:20px;height:20px;padding:0;font-size:12px;line-height:1;background:rgba(11,10,8,.85);color:var(--bone)}
+/* ---------- 印相纸：结果 ---------- */
+.out{display:none;white-space:pre-wrap;background:var(--paper);color:var(--ink);padding:22px 24px;font-size:14px;line-height:1.9;margin-top:16px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.out.show{display:block}
+.out.develop{animation:develop 1.4s ease-out}
+@keyframes develop{from{filter:blur(7px) sepia(.7) brightness(1.5);opacity:.35}to{filter:blur(0) sepia(0) brightness(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){.out.develop{animation:none}html{scroll-behavior:auto}}
+.status{font-size:13px;color:var(--bone2);margin-top:12px}
+.status.err{color:#FF7A5C}.status.ok{color:#8FD0A5}
+footer{margin-top:56px;border-top:1px solid var(--edge);padding-top:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--bone2);font-size:11.5px;letter-spacing:.22em}
+@media(max-width:640px){.station-note{display:none}.frame{width:30vw}.frame img{width:30vw;height:22vw}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-<div class="kicker">AI 提示词反提取</div>
-<h1>Prompt Lens</h1>
-<div class="sub">给它一张照片、一段视频，或一条视频链接，它把画面反推成可以直接拿去生成的提示词——主体、服装配饰、场景、光线、运镜逐项拆清，看不清的地方标“推测”，不编。</div>
+<div class="brandrow"><div class="brand">暗 房 · 反 提 取</div><div class="ver mono">PROMPT LENS — V2</div></div>
+<h1>把画面<span class="lens">显影</span>成提示词</h1>
+<p class="lede">给它一张照片、一段视频，或一条视频链接。它逐帧看完，<b>反推出能直接拿去生成的提示词</b>——主体、服装配饰、场景、光线、运镜逐项拆清；看不清的地方标“推测”，不编。</p>
 </header>
 
 <section>
-<h2>第一步 · 给内容</h2>
+<div class="station-head"><span class="station-no">No.1</span><h2>装片</h2><span class="station-note">照片 / 视频 / 链接，三选一</span></div>
 <div class="tabs">
 <div class="tab on" data-mode="image">照片</div>
 <div class="tab" data-mode="video">视频文件</div>
@@ -84,15 +110,15 @@ footer{margin-top:26px;text-align:center;color:var(--ink2);font-size:12px;letter
 <input type="url" id="linkUrl" placeholder="把链接粘贴到这里">
 <div class="acts"><button id="btnLink">读取链接</button></div>
 <div class="note" id="linkStatus"></div>
-<div class="warn">实话说明：网页受浏览器跨域限制，链接不一定能直接读到画面。读取失败时最稳的办法是把视频先保存到手机/电脑，再用上面的“视频文件”上传——效果完全一样。</div>
+<div class="warn">实话说明：网页受浏览器跨域限制，链接不一定能直接读到画面。读取失败时最稳的办法是把视频先保存到手机/电脑，再用上面的“视频文件”上传，效果完全一样。</div>
 </div>
 
-<div class="frames" id="frames"></div>
+<div class="strip" id="strip"><div class="frames" id="frames"></div></div>
 <div class="note" id="frameNote"></div>
 </section>
 
 <section>
-<h2>第二步 · 接口设置</h2>
+<div class="station-head"><span class="station-no">No.2</span><h2>配液</h2><span class="station-note">接口三样，缺一不可</span></div>
 <div class="row">
 <div><label>接口地址（OpenAI 兼容，以 /v1 结尾）</label><input type="text" id="apiBase" placeholder="例如 https://api.openai.com/v1 或你的中转站地址"></div>
 <div><label>模型（要带视觉能力）</label><input type="text" id="apiModel" placeholder="例如 gpt-4o / gemini-2.5-pro / qwen-vl-max"></div>
@@ -103,7 +129,7 @@ footer{margin-top:26px;text-align:center;color:var(--ink2);font-size:12px;letter
 </section>
 
 <section>
-<h2>第三步 · 反提取</h2>
+<div class="station-head"><span class="station-no">No.3</span><h2>显影</h2><span class="station-note">结果会印在相纸上</span></div>
 <label>补充要求（可空）</label>
 <textarea id="extra" placeholder="例如：重点拆运镜；我要用在即梦里；人物是重点，配饰逐项列全……"></textarea>
 <div class="acts">
@@ -115,16 +141,15 @@ footer{margin-top:26px;text-align:center;color:var(--ink2);font-size:12px;letter
 <div class="out" id="output"></div>
 </section>
 
-<footer>PROMPT LENS · 反提取结果请自行核对“不确定项”再使用</footer>
+<footer><span>PROMPT LENS · 暗房出品</span><span>反提取结果请先核对“不确定项”再使用</span></footer>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
-const framesEl = $('#frames'), statusEl = $('#status'), outputEl = $('#output');
-let frames = []; // {dataUrl, label}
+const framesEl = $('#frames'), statusEl = $('#status'), outputEl = $('#output'), stripEl = $('#strip');
+let frames = [];
 let mode = 'image';
 
-// ---------- 设置持久化 ----------
 const cfgIds = ['apiBase','apiModel','apiKey'];
 cfgIds.forEach(id => {
 const el = document.getElementById(id);
@@ -132,30 +157,29 @@ el.value = localStorage.getItem('pl_' + id) || '';
 el.addEventListener('change', () => localStorage.setItem('pl_' + id, el.value.trim()));
 });
 
-// ---------- 页签 ----------
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
 document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
 t.classList.add('on'); mode = t.dataset.mode;
 ['image','video','link'].forEach(m => $('#pane-' + m).style.display = m === mode? '': 'none');
 }));
 
-// ---------- 帧管理 ----------
 function renderFrames() {
 framesEl.innerHTML = '';
+stripEl.classList.toggle('show', frames.length > 0);
 frames.forEach((f, i) => {
 const d = document.createElement('div'); d.className = 'frame';
-d.innerHTML = '<img src="' + f.dataUrl + '"><span class="t">' + f.label + '</span>';
+d.innerHTML = '<img src="' + f.dataUrl + '"><span class="t">F.' + String(i + 1).padStart(2, '0') + ' · ' + f.label + '</span>';
 const x = document.createElement('button'); x.className = 'x'; x.textContent = '×';
 x.onclick = () => { frames.splice(i, 1); renderFrames();};
 d.appendChild(x); framesEl.appendChild(d);
 });
-$('#frameNote').textContent = frames.length? ('已备好 ' + frames.length + ' 帧，点 × 可去掉不要的。帧越多、覆盖视频全程，反推越准。'): '';
+$('#frameNote').textContent = frames.length? ('胶片已装好 ' + frames.length + ' 帧，点 × 可去掉不要的。帧越多、覆盖全程，反推越准。'): '';
 }
-function downscale(imgOrCanvas, srcW, srcH) {
+function downscale(source, srcW, srcH) {
 const max = 1024, r = Math.min(1, max / Math.max(srcW, srcH));
 const c = document.createElement('canvas');
 c.width = Math.round(srcW * r); c.height = Math.round(srcH * r);
-c.getContext('2d').drawImage(imgOrCanvas, 0, 0, c.width, c.height);
+c.getContext('2d').drawImage(source, 0, 0, c.width, c.height);
 return c.toDataURL('image/jpeg', 0.82);
 }
 function addImageFile(file) {
@@ -166,7 +190,6 @@ img.src = URL.createObjectURL(file);
 $('#dropImg').onclick = () => $('#fileImg').click();
 $('#fileImg').onchange = e => { if (e.target.files[0]) addImageFile(e.target.files[0]);};
 
-// ---------- 视频抽帧 ----------
 const vid = $('#vid');
 let vidURL = null;
 $('#dropVid').onclick = () => $('#fileVid').click();
@@ -202,7 +225,6 @@ frames.push({ dataUrl: downscale(vid, vid.videoWidth, vid.videoHeight), label: v
 renderFrames();
 };
 
-// ---------- 链接读取（实验性：经公共代理取页面 og 信息） ----------
 $('#btnLink').onclick = async () => {
 const url = $('#linkUrl').value.trim();
 const st = $('#linkStatus');
@@ -227,7 +249,6 @@ st.textContent = '读取失败（网络或跨域限制）。建议下载视频�
 }
 };
 
-// ---------- 反提取 ----------
 const SYSTEM = `你是一名顶级的 AI 视频/图片提示词反向工程师。用户会给你同一条作品的一张或多张画面帧（视频会给覆盖全程的多帧）。你的任务：反推出能最大程度复刻这条作品的生成提示词，并做结构化拆解。
 
 铁律：
@@ -259,9 +280,9 @@ const model = $('#apiModel').value.trim();
 const key = $('#apiKey').value.trim();
 cfgIds.forEach(id => localStorage.setItem('pl_' + id, document.getElementById(id).value.trim()));
 if (!frames.length) { setStatus('先给一张照片、一段视频或一个链接，把画面备好。', 'err'); return;}
-if (!base ||!model ||!key) { setStatus('接口地址、模型、密钥三样都要填（在第二步）。', 'err'); return;}
-setStatus('正在反提取，帧数 ' + frames.length + '，请稍等……');
-outputEl.textContent = ''; lastText = '';
+if (!base ||!model ||!key) { setStatus('接口地址、模型、密钥三样都要填（在 No.2 配液）。', 'err'); return;}
+setStatus('正在显影，帧数 ' + frames.length + '，请稍等……');
+outputEl.textContent = ''; outputEl.classList.remove('show', 'develop'); lastText = '';
 $('#btnCopyZh').disabled = true; $('#btnSave').disabled = true;
 const content = [{ type: 'text', text: '请反推这些画面的生成提示词。' + ($('#extra').value.trim()? '补充要求：' + $('#extra').value.trim(): '')}];
 frames.forEach(f => content.push({ type: 'image_url', image_url: { url: f.dataUrl}}));
@@ -275,7 +296,9 @@ if (!r.ok) throw new Error('接口返回 ' + r.status + '：' + (await r.text())
 const j = await r.json();
 lastText = j.choices?.[0]?.message?.content || '(接口没有返回内容)';
 outputEl.textContent = lastText;
-setStatus('完成。先看一眼再拿去生成，心里更有数。', 'ok');
+outputEl.classList.add('show');
+requestAnimationFrame(() => outputEl.classList.add('develop'));
+setStatus('显影完成。先看一眼再拿去生成，心里更有数。', 'ok');
 $('#btnCopyZh').disabled = false; $('#btnSave').disabled = false;
 } catch (e) {
 setStatus('出错了：' + e.message + '。常见原因：接口地址不对、密钥无效、模型不带视觉、或中转站不支持图片输入。', 'err');
